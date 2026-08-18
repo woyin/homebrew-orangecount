@@ -5,27 +5,27 @@
 class Orangecount < Formula
   desc "Beancount v3 engine with dialect superset, Fava-compatible UI and query CLI"
   homepage "https://github.com/woyin/orangecount"
-  url "https://github.com/woyin/orangecount/releases/download/v0.3.3/orangecount-darwin-arm64"
+  url "https://github.com/woyin/orangecount/releases/download/v0.3.4/orangecount-darwin-arm64"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
-      url "https://github.com/woyin/orangecount/releases/download/v0.3.3/orangecount-darwin-arm64"
-      sha256 "69c77087c200b9b40490a9b4d11ac816149054b0692f354b68e6344d5aa98768"
+      url "https://github.com/woyin/orangecount/releases/download/v0.3.4/orangecount-darwin-arm64"
+      sha256 "f1721d4ce12ecc4410907057be7c5eb0a7ba74244630bfacece640295547668b"
     end
     on_intel do
-      url "https://github.com/woyin/orangecount/releases/download/v0.3.3/orangecount-darwin-amd64"
-      sha256 "6e543fad1a824019765f05341a468993dc0c5629519980fb2ac739d0e4625d67"
+      url "https://github.com/woyin/orangecount/releases/download/v0.3.4/orangecount-darwin-amd64"
+      sha256 "d7d114b0c66949dc5ddde40352a52b12a060ec4ec27067d22b6eef5e68346ec0"
     end
   end
   on_linux do
     on_arm do
-      url "https://github.com/woyin/orangecount/releases/download/v0.3.3/orangecount-linux-arm64"
-      sha256 "ad867298222fc267c0faf89d132c74ef74fe9d4c0377914b17f59f8523d30cef"
+      url "https://github.com/woyin/orangecount/releases/download/v0.3.4/orangecount-linux-arm64"
+      sha256 "5a0d02f72c327f6205cc03e9a1478c5b4fc6871ffffe1558b0910dae35c15a03"
     end
     on_intel do
-      url "https://github.com/woyin/orangecount/releases/download/v0.3.3/orangecount-linux-amd64"
-      sha256 "3ea77f2e17bf82200635b69ca7d5b7f83a052ddcad5a544ca51548e934e60489"
+      url "https://github.com/woyin/orangecount/releases/download/v0.3.4/orangecount-linux-amd64"
+      sha256 "f87a9d88c17cab59e17ee08e983c24ddbc92e68282a25bb4298032decd4f5e51"
     end
   end
 
