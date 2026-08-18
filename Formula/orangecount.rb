@@ -12,21 +12,21 @@ class Orangecount < Formula
   on_macos do
     on_arm do
       url "https://github.com/woyin/orangecount/releases/download/v0.3.0/orangecount-darwin-arm64"
-      sha256 "6044f2932e912c9c9d8957457a9a08d2846aee2ca3de80e0d302bee0646eb8a3"
+      sha256 "2cbb4f1bb7f565baa440c70baa9523fd1568bc19802813d8e2b63e2f678ecf52"
     end
     on_intel do
       url "https://github.com/woyin/orangecount/releases/download/v0.3.0/orangecount-darwin-amd64"
-      sha256 "2c70eedccddcdf962c909e5c67cbd110cd740d51c740aaa321781d40c2630f69"
+      sha256 "8cf0921a206b3fca6e2054efd1c679f2f12ea6c2ea1f3b14447b41bf6069f040"
     end
   end
   on_linux do
     on_arm do
       url "https://github.com/woyin/orangecount/releases/download/v0.3.0/orangecount-linux-arm64"
-      sha256 "21d3f09b5d3487eb915968ae912a4ebf9e8d4e0d414dda9728e5e9ee25802067"
+      sha256 "ddc694bce5a4a65b77ebce0865ecf9db47d59eeece647354a62133567783485a"
     end
     on_intel do
       url "https://github.com/woyin/orangecount/releases/download/v0.3.0/orangecount-linux-amd64"
-      sha256 "6229cd287a9f466269d64d7f971ba2581744899b3b1a8f9699aa0700c38c30b5"
+      sha256 "c313802fd5c5aac822a225b475db2052d7f1b41146429956b7515b621de05a9b"
     end
   end
 
