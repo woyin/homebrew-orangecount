@@ -6,7 +6,6 @@ class Orangecount < Formula
   desc "Beancount v3 engine with dialect superset, Fava-compatible UI and query CLI"
   homepage "https://github.com/woyin/orangecount"
   url "https://github.com/woyin/orangecount/releases/download/v0.3.3/orangecount-darwin-arm64"
-  version "0.3.3"
   license "Apache-2.0"
 
   on_macos do
