@@ -1,37 +1,31 @@
-# OrangeCount — a single-binary Beancount v3 reader/validator with a
-# Fava-compatible web UI and a query CLI.
+# OrangeCount — a single-binary Beancount v3 superset engine with a
+# Fava-compatible web UI, a BQL query CLI, and a localized account-root scheme.
 # Binary-only formula: each platform downloads its prebuilt static binary from
 # the GitHub release (zero runtime dependencies, pure Go).
-#
-# Version note: this formula tracks the published GitHub release. The source
-# repository's HEAD is a later generation that adds --semantics, typed query
-# formats, compare-semantics and the localized account-root scheme; none of
-# those flags exist in 0.3.7, so this test block only asserts what 0.3.7
-# actually supports.
 class Orangecount < Formula
-  desc "Beancount v3 reader and validator with a Fava-compatible web UI"
+  desc "Beancount v3 superset engine with Fava-compatible UI and BQL query CLI"
   homepage "https://github.com/woyin/orangecount"
-  version "0.3.7"
+  version "0.3.8"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-darwin-arm64"
-      sha256 "8d674277d1a0c728cddf55004b42edf4903e50edc21e08d7ef0b48d21a973072"
+      sha256 "c3ef2fc6d5dc1511dc7a9100f2794364e7417a0a5eea27f4911139844b71149e"
     end
     on_intel do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-darwin-amd64"
-      sha256 "a9638cac2c906e156402e48bd26b0c1f2392ebfc6dbeaa4758a20daec1a5e99c"
+      sha256 "193de0b206f9a0d75d486d8c1b660b5381dc474e2a329990944d682e656e607d"
     end
   end
   on_linux do
     on_arm do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-linux-arm64"
-      sha256 "fe5bdabd33f8a9983eedc3dd4c84e9766db438858ec8f106eebe7d9adfc53a64"
+      sha256 "7f00bd7690af9354deecf353a4f58bb98e468d7d5dfa10a1acd647fd2d6745a6"
     end
     on_intel do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-linux-amd64"
-      sha256 "bcf131fcffd36d972e4603fba59611e58830ff6d0de9d97a37c3a257f8da821c"
+      sha256 "1a0a1c1b98cd2ec00d78855a681d66de7448116779af1a38b83c18de7dfeeb6e"
     end
   end
 
@@ -45,12 +39,10 @@ class Orangecount < Formula
     <<~EOS
       OrangeCount is a local tool: it reads and writes only the ledger you
       point it at. Start the web workbench with:
-        orangecount serve --addr 127.0.0.1:5100 /path/to/main.bean
+        orangecount serve --semantics v3 --addr 127.0.0.1:5100 /path/to/main.bean
 
-      This build predates the --semantics switch, so it validates every ledger
-      with the legacy profile. To validate with Beancount v3 semantics, build
-      the source repository's current HEAD instead:
-        git clone https://github.com/woyin/orangecount && cd orangecount && make build
+      Pass --semantics v3 for a Beancount v3 ledger; the default profile is
+      legacy. The user guide is docs/user-guide.md in the source repository.
     EOS
   end
 
@@ -66,9 +58,9 @@ class Orangecount < Formula
         Assets:Wallet -50 CNY
         Expenses:Living 50 CNY
     EOS
-    assert_equal "", shell_output("#{bin}/orangecount check #{testpath}/smoke.bean 2>&1")
+    assert_equal "", shell_output("#{bin}/orangecount check --semantics v3 #{testpath}/smoke.bean 2>&1")
 
-    # An unbalanced transaction must be reported, not accepted.
+    # An unbalanced transaction is reported through the exit status.
     (testpath/"bad.bean").write <<~EOS
       option "operating_currency" "CNY"
       2026-01-01 open Assets:Wallet CNY
@@ -76,16 +68,19 @@ class Orangecount < Formula
         Assets:Wallet -50 CNY
     EOS
     assert_match "E-EVAL-UNBALANCED",
-                 shell_output("#{bin}/orangecount check #{testpath}/bad.bean 2>&1", 1)
+                 shell_output("#{bin}/orangecount check --semantics v3 #{testpath}/bad.bean 2>&1", 1)
 
-    # The query CLI is the scripting surface; keep it working end to end.
-    assert_match "Assets:Wallet", shell_output(
-      "#{bin}/orangecount query --format csv #{testpath}/smoke.bean " \
-      "'SELECT account FROM accounts ORDER BY account' 2>&1",
-    )
+    # A root outside the configured account types is rejected, not dropped.
+    (testpath/"bad-root.bean").write <<~EOS
+      option "operating_currency" "CNY"
+      2026-01-01 open Acme:Cash CNY
+    EOS
+    assert_match "E-EVAL-ACCOUNT",
+                 shell_output("#{bin}/orangecount check --semantics v3 #{testpath}/bad-root.bean 2>&1", 1)
 
-    # Localized root names are accepted by this build (no option needed).
+    # The localized root scheme is this release's headline feature.
     (testpath/"cn.bean").write <<~EOS
+      option "account_root_scheme" "zh-Hans"
       option "operating_currency" "CNY"
       2026-01-01 open 资产:钱包 CNY
       2026-01-01 open 支出:餐饮 CNY
@@ -94,6 +89,17 @@ class Orangecount < Formula
         资产:钱包 -50 CNY
         支出:餐饮 50 CNY
     EOS
-    assert_equal "", shell_output("#{bin}/orangecount check #{testpath}/cn.bean 2>&1")
+    assert_equal "", shell_output("#{bin}/orangecount check --semantics v3 #{testpath}/cn.bean 2>&1")
+
+    # The typed query format is the scripting surface.
+    assert_match "资产:钱包", shell_output(
+      "#{bin}/orangecount query --format typed-csv --semantics v3 " \
+      "#{testpath}/cn.bean 'SELECT account FROM accounts ORDER BY account' 2>&1",
+    )
+
+    # compare-semantics reports both profiles as valid in one JSON document.
+    comparison = shell_output("#{bin}/orangecount compare-semantics #{testpath}/smoke.bean 2>&1")
+    assert_match "\"legacy\"", comparison
+    assert_match "\"v3\"", comparison
   end
 end
