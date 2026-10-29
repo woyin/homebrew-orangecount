@@ -5,27 +5,27 @@
 class Orangecount < Formula
   desc "Beancount v3 superset engine with Fava-compatible UI and BQL query CLI"
   homepage "https://github.com/woyin/orangecount"
-  version "0.3.9"
+  version "0.3.11"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-darwin-arm64"
-      sha256 "db718c8ce2712c7bccb24f3d701b5f3bf2d43bb2305a75cae42497cadcb1afba"
+      sha256 "66c64f0f6b9b799aae9023fba0d905c1e2a21f7aafe50df2836a994d7fcd0f23"
     end
     on_intel do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-darwin-amd64"
-      sha256 "2a660c0bc535941ef013176d8462b12d7bf3b2591088ad7be1f55adb569a5c52"
+      sha256 "ee5cd516efed7c30e038104ddc84fe6787f668ba82d13a575e12ceb56916ac94"
     end
   end
   on_linux do
     on_arm do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-linux-arm64"
-      sha256 "d7fb77dd7729e9bb281fc4c099016100f919b4d6abec81e04e35a3c088f304d2"
+      sha256 "f6d1ca11b926ba38c9df87c55635d3d7ec88343df18e5cdfc0cb62330721952a"
     end
     on_intel do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-linux-amd64"
-      sha256 "227247a7dd20b0ed1085684b545346fc33e8f96c0d5023e4fde5340860e2ff99"
+      sha256 "3f20f1c84680903ffc292cbfb84657dd508bd7fc443e865d9da839df78d04f7b"
     end
   end
 
@@ -97,8 +97,9 @@ class Orangecount < Formula
       "#{testpath}/cn.bean 'SELECT account FROM accounts ORDER BY account' 2>&1",
     )
 
-    # 0.3.9 exports an include tree from a build without cgo, which is what a
+    # An include tree publishes from a build without cgo, which is what a
     # released binary is. A silent refusal here shipped for three releases.
+    # (0.3.9; kept as a regression guard for every later release.)
     (testpath/"book/main.bean").write <<~EOS
       include "accounts.bean"
     EOS
@@ -110,5 +111,20 @@ class Orangecount < Formula
     system bin/"orangecount", "export", "--semantics", "v3",
            "-out", testpath/"out/book", testpath/"book/main.bean"
     assert_path_exists testpath/"out/book/accounts.bean"
+    # Replacing a file this tool published must not disturb a file it preserved,
+    # and it must not create a new backup on every run.
+    (testpath/"src").mkpath
+    (testpath/"src/one.bean").write <<~EOS
+      option "operating_currency" "CNY"
+      2026-01-01 open Assets:Wallet CNY
+    EOS
+    keep = testpath/"out/single.bean.orangecount.bak"
+    keep.write "preserved original"
+    system bin/"orangecount", "export", "--semantics", "v3",
+           "-out", testpath/"out/single.bean", testpath/"src/one.bean"
+    system bin/"orangecount", "export", "--semantics", "v3",
+           "-out", testpath/"out/single.bean", testpath/"src/one.bean"
+    assert_equal "preserved original", keep.read
+    assert_path_exists testpath/"out/single.bean.orangecount.published"
   end
 end
