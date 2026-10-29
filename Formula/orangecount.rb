@@ -5,27 +5,27 @@
 class Orangecount < Formula
   desc "Beancount v3 superset engine with Fava-compatible UI and BQL query CLI"
   homepage "https://github.com/woyin/orangecount"
-  version "0.3.8"
+  version "0.3.9"
   license "Apache-2.0"
 
   on_macos do
     on_arm do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-darwin-arm64"
-      sha256 "c3ef2fc6d5dc1511dc7a9100f2794364e7417a0a5eea27f4911139844b71149e"
+      sha256 "db718c8ce2712c7bccb24f3d701b5f3bf2d43bb2305a75cae42497cadcb1afba"
     end
     on_intel do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-darwin-amd64"
-      sha256 "193de0b206f9a0d75d486d8c1b660b5381dc474e2a329990944d682e656e607d"
+      sha256 "2a660c0bc535941ef013176d8462b12d7bf3b2591088ad7be1f55adb569a5c52"
     end
   end
   on_linux do
     on_arm do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-linux-arm64"
-      sha256 "7f00bd7690af9354deecf353a4f58bb98e468d7d5dfa10a1acd647fd2d6745a6"
+      sha256 "d7fb77dd7729e9bb281fc4c099016100f919b4d6abec81e04e35a3c088f304d2"
     end
     on_intel do
       url "https://github.com/woyin/orangecount/releases/download/v#{version}/orangecount-linux-amd64"
-      sha256 "1a0a1c1b98cd2ec00d78855a681d66de7448116779af1a38b83c18de7dfeeb6e"
+      sha256 "227247a7dd20b0ed1085684b545346fc33e8f96c0d5023e4fde5340860e2ff99"
     end
   end
 
@@ -78,7 +78,7 @@ class Orangecount < Formula
     assert_match "E-EVAL-ACCOUNT",
                  shell_output("#{bin}/orangecount check --semantics v3 #{testpath}/bad-root.bean 2>&1", 1)
 
-    # The localized root scheme is this release's headline feature.
+    # The localized root scheme is this line's headline feature.
     (testpath/"cn.bean").write <<~EOS
       option "account_root_scheme" "zh-Hans"
       option "operating_currency" "CNY"
@@ -97,9 +97,18 @@ class Orangecount < Formula
       "#{testpath}/cn.bean 'SELECT account FROM accounts ORDER BY account' 2>&1",
     )
 
-    # compare-semantics reports both profiles as valid in one JSON document.
-    comparison = shell_output("#{bin}/orangecount compare-semantics #{testpath}/smoke.bean 2>&1")
-    assert_match "\"legacy\"", comparison
-    assert_match "\"v3\"", comparison
+    # 0.3.9 exports an include tree from a build without cgo, which is what a
+    # released binary is. A silent refusal here shipped for three releases.
+    (testpath/"book/main.bean").write <<~EOS
+      include "accounts.bean"
+    EOS
+    (testpath/"book/accounts.bean").write <<~EOS
+      option "operating_currency" "CNY"
+      2026-01-01 open Assets:Wallet CNY
+    EOS
+    (testpath/"out").mkpath
+    system bin/"orangecount", "export", "--semantics", "v3",
+           "-out", testpath/"out/book", testpath/"book/main.bean"
+    assert_path_exists testpath/"out/book/accounts.bean"
   end
 end
